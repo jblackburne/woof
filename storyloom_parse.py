@@ -3,6 +3,15 @@ import json
 from datetime import datetime
 
 
+def _get_scene_titles(storydata):
+    scene_titles = {}
+    for chapter in storydata.get("chapters", []):
+        for scene_id, scene in chapter.get("contents", {}).get("scenes", {}).items():
+            scene_titles[scene_id] = scene["title"]
+
+    return scene_titles
+
+
 def _print_text_component(comp):
     print(comp["text"])
     print()
@@ -23,7 +32,19 @@ def _print_dialog_component(comp, config):
     print()
 
 
-def _print_switch_component(comp, variables, config):
+def _print_jump_component(comp, scene_titles):
+    dest = comp["jumpTransition"]["destination"]
+    if dest == "end-of-chapter":
+        print("JUMP TO END OF CHAPTER")
+        print()
+    elif dest == "specific-scene":
+        scene_id = comp["jumpTransition"]["targetScene"]
+        scene_title = scene_titles.get(scene_id, "")
+        print(f"JUMP TO SCENE: {scene_title}")
+        print()
+
+
+def _print_switch_component(comp, variables, scene_titles, config):
     var_id = comp["variableId"]
     var_name = [v["name"] for v in variables if v["id"] == var_id][0]
     print(f"VARIABLE CHECK. DEPENDING ON `{var_name}`, TAKE ONE BRANCH:")
@@ -32,43 +53,46 @@ def _print_switch_component(comp, variables, config):
         print(f"BRANCH {ibranch}")
         print()
         for branch_comp in branch["components"]:
-            _print_component(branch_comp, variables, config)
+            _print_component(branch_comp, variables, scene_titles, config)
     print("END VARIABLE CHECK")
     print()
 
 
-def _print_choice_component(comp, variables, config):
+def _print_choice_component(comp, variables, scene_titles, config):
     print("BEGIN CHOICE BLOCK")
     print()
     prompt = comp.get("promptComponent")
     if prompt is not None:
-        _print_component(prompt, variables, config)
+        _print_component(prompt, variables, scene_titles, config)
     for iopt, option in enumerate(comp.get("options", []), start=1):
         choice_text = option.get("displayText")
         if choice_text is not None:
             print(f"OPTION {iopt}: {choice_text}")
             print()
         for opt_comp in option.get("components", []):
-            _print_component(opt_comp, variables, config)
+            _print_component(opt_comp, variables, scene_titles, config)
     print("END CHOICE BLOCK")
     print()
 
 
-def _print_component(comp, variables, config):
+def _print_component(comp, variables, scene_titles, config):
     component_type = comp.get("type")
     if component_type == "textComponent":
         _print_text_component(comp)
     elif component_type == "dialogComponent":
         _print_dialog_component(comp, config)
+    elif component_type == "jumpComponent":
+        _print_jump_component(comp, scene_titles)
     elif component_type == "choiceV2Component":
-        _print_choice_component(comp, variables, config)
+        _print_choice_component(comp, variables, scene_titles, config)
     elif component_type == "switchComponent":
-        _print_switch_component(comp, variables, config)
+        _print_switch_component(comp, variables, scene_titles, config)
 
 
 def format_story(storydata):
-    # Get the story configuration data
+    # Get the story configuration data, etc.
     variables = storydata.get("variables", {})
+    scene_titles = _get_scene_titles(storydata)
     config = storydata.get("configuration", {})
 
     # Story title
@@ -125,7 +149,7 @@ def format_story(storydata):
 
             # Print the scene components
             for comp in scene.get("components", []):
-                _print_component(comp, variables, config)
+                _print_component(comp, variables, scene_titles, config)
 
 
 if __name__ == "__main__":
