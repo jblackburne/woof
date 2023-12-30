@@ -23,35 +23,52 @@ def _print_dialog_component(comp, config):
     print()
 
 
-def _print_choice_component(comp, config):
+def _print_switch_component(comp, variables, config):
+    var_id = comp["variableId"]
+    var_name = [v["name"] for v in variables if v["id"] == var_id][0]
+    print(f"VARIABLE CHECK. DEPENDING ON `{var_name}`, TAKE ONE BRANCH:")
+    print()
+    for ibranch, branch in enumerate(comp["branches"], start=1):
+        print(f"BRANCH {ibranch}")
+        print()
+        for branch_comp in branch["components"]:
+            _print_component(branch_comp, variables, config)
+    print("END VARIABLE CHECK")
+    print()
+
+
+def _print_choice_component(comp, variables, config):
     print("BEGIN CHOICE BLOCK")
     print()
     prompt = comp.get("promptComponent")
     if prompt is not None:
-        _print_component(prompt, config)
+        _print_component(prompt, variables, config)
     for iopt, option in enumerate(comp.get("options", []), start=1):
         choice_text = option.get("displayText")
         if choice_text is not None:
             print(f"OPTION {iopt}: {choice_text}")
             print()
         for opt_comp in option.get("components", []):
-            _print_component(opt_comp, config)
+            _print_component(opt_comp, variables, config)
     print("END CHOICE BLOCK")
     print()
 
 
-def _print_component(comp, config):
+def _print_component(comp, variables, config):
     component_type = comp.get("type")
     if component_type == "textComponent":
         _print_text_component(comp)
     elif component_type == "dialogComponent":
         _print_dialog_component(comp, config)
     elif component_type == "choiceV2Component":
-        _print_choice_component(comp, config)
+        _print_choice_component(comp, variables, config)
+    elif component_type == "switchComponent":
+        _print_switch_component(comp, variables, config)
 
 
 def format_story(storydata):
     # Get the story configuration data
+    variables = storydata.get("variables", {})
     config = storydata.get("configuration", {})
 
     # Story title
@@ -108,7 +125,7 @@ def format_story(storydata):
 
             # Print the scene components
             for comp in scene.get("components", []):
-                _print_component(comp, config)
+                _print_component(comp, variables, config)
 
 
 if __name__ == "__main__":
