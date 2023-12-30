@@ -157,7 +157,7 @@ if __name__ == "__main__":
         print(f"Usage: {sys.argv[0]} <filename>")
         sys.exit(1)
 
-    with open(sys.argv[1], "r") as f:
+    with open(sys.argv[1], "r", encoding="utf-8") as f:
         storydata = json.load(f)
 
     format_story(storydata)
