@@ -126,7 +126,7 @@ def format_story(storydata):
         # Chapter title
         chapter_title = chapter.get("title")
         print(f"## Chapter {ichapter}", end="")
-        print("" if chapter_title is None else f": {chapter_title}")
+        print(" ##" if chapter_title is None else f": {chapter_title} ##")
         print()
 
         # Chapter description
@@ -144,7 +144,7 @@ def format_story(storydata):
         for scene in scenes:
             # Scene title
             scene_title = scene.get("title", "Untitled")
-            print(f"### Scene: {scene_title}")
+            print(f"### Scene: {scene_title} ###")
             print()
 
             # Print the scene components
