@@ -3,80 +3,106 @@ import json
 from datetime import datetime
 
 
+def _print_text_component(comp):
+    print(comp["text"])
+    print()
+
+
+def _print_dialog_component(comp, config):
+    character_key = comp.get("characterAssetId")
+    character_name = config.get("characterMap", {}).get(character_key, {}).get("characterName")
+    if character_name is not None:
+        print(f"{character_name}: ", end="")
+    print(comp["dialog"])
+    print()
+
+
+def _print_choice_component(comp, config):
+    print("BEGIN CHOICE BLOCK")
+    print()
+    prompt = comp.get("promptComponent")
+    if prompt is not None:
+        _print_component(prompt, config)
+    for iopt, option in enumerate(comp.get("options", []), start=1):
+        choice_text = option.get("displayText")
+        if choice_text is not None:
+            print(f"OPTION {iopt}: {choice_text}")
+            print()
+        for opt_comp in option.get("components", []):
+            _print_component(opt_comp, config)
+    print("END CHOICE BLOCK")
+    print()
+
+
+def _print_component(comp, config):
+    component_type = comp.get("type")
+    if component_type == "textComponent":
+        _print_text_component(comp)
+    elif component_type == "dialogComponent":
+        _print_dialog_component(comp, config)
+    elif component_type == "choiceV2Component":
+        _print_choice_component(comp, config)
+
+
 def format_story(storydata):
-    # Per-story information (title, etc)
+    # Get the story configuration data
+    config = storydata.get("configuration", {})
+
+    # Story title
     title = storydata.get("name", "Untitled")
+    print(f"# {title} #")
+    print()
+
+    # Dates of creation and last modification
     created = storydata.get("createdOn")
     if created is not None:
-        created = datetime.fromisoformat(created)
+        created = datetime.fromisoformat(created).strftime("%Y/%m/%d")
     lastmod = storydata.get("lastModified")
     if lastmod is not None:
-        lastmod = datetime.fromisoformat(lastmod)
+        lastmod = datetime.fromisoformat(lastmod).strftime("%Y/%m/%d")
+    print(f"Created {created}")
+    print()
+    print(f"Last modified {lastmod}")
+    print()
+
+    # Story description
     description = storydata.get("description")
-    character_map = storydata.get("configuration", {}).get("characterMap", {})
+    print("### Description ###")
+    print()
+    print(description)
+    print()
 
     # Chapter and scene information
     chapters = sorted(storydata.get("chapters", []),
                       key=lambda c: c.get("order", 0))
-    chapter_scenes = []
-    for chapter in chapters:
-        chapter_title = chapter.get("title", "")
-        if chapter_title:
-            chapter_title = ": " + chapter_title
-        chapter_description = chapter.get("description", "")
+    for ichapter, chapter in enumerate(chapters, start=1):
+        # Chapter title
+        chapter_title = chapter.get("title")
+        print(f"## Chapter {ichapter}", end="")
+        print("" if chapter_title is None else f": {chapter_title}")
+        print()
+
+        # Chapter description
+        chapter_description = chapter.get("description")
+        if chapter_description is not None:
+            print("---")
+            print()
+            print(chapter_description)
+            print()
+            print("---")
+            print()
+
         scenes = sorted(chapter.get("contents", {}).get("scenes", {}).values(),
                         key=lambda s: s.get("order", 0))
-        scene_components = []
         for scene in scenes:
+            # Scene title
             scene_title = scene.get("title", "Untitled")
-            component_text = []
+            print(f"### Scene: {scene_title}")
+            print()
+
+            # Print the scene components
             for comp in scene.get("components", []):
-                if comp["type"] == "dialogComponent":
-                    character_key = comp.get("characterAssetId")
-                    character_name = character_map.get(character_key, {}).get("characterName", "")
-                    if character_name:
-                        character_name += ": "
-                    component_text.append("{}{}".format(character_name, comp["dialog"]))
-                elif comp["type"] == "textComponent":
-                    component_text.append(comp["text"])
-            scene_components.append((scene_title, component_text))
-        chapter_scenes.append((chapter_title, chapter_description, scene_components))
-
-    # Now write it all out
-    output = f"""# {title} #
-
-Created {created.strftime("%Y/%m/%d")}
-
-Last modified {lastmod.strftime("%Y/%m/%d")}
-
-### Description ###
-
-{description}
-"""
-    for ichapter, (chapter_title, chapter_desc, scenelist) in enumerate(chapter_scenes):
-        chapter_output = f"""
-## Chapter {ichapter + 1}{chapter_title} ##
-
----
-
-{chapter_desc}
-
----
-
-"""
-        for scene_title, component_text in scenelist:
-            scene_output = f"""### Scene: {scene_title} ###
-
-"""
-            for comp in component_text:
-                scene_output += f"""
-{comp}
-
-"""
-            chapter_output += scene_output
-        output += chapter_output
-
-    return output
+                _print_component(comp, config)
 
 
 if __name__ == "__main__":
@@ -87,5 +113,4 @@ if __name__ == "__main__":
     with open(sys.argv[1], "r") as f:
         storydata = json.load(f)
 
-    print(format_story(storydata))
-
+    format_story(storydata)
