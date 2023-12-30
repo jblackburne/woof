@@ -11,9 +11,15 @@ def _print_text_component(comp):
 def _print_dialog_component(comp, config):
     character_key = comp.get("characterAssetId")
     character_name = config.get("characterMap", {}).get(character_key, {}).get("characterName")
+    dialog = comp["dialog"]
+
+    # Format the dialog nice
+    dialog = "> " + dialog.replace("\n", "\n> ")
+
     if character_name is not None:
-        print(f"{character_name}: ", end="")
-    print(comp["dialog"])
+        print(f"{character_name}:")
+        print()
+    print(dialog)
     print()
 
 
