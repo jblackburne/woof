@@ -65,14 +65,16 @@ def _print_switch_component(comp, variables, scene_titles, choice_names, config)
 def _print_if_component(comp, variables, scene_titles, choice_names, config):
     choice_id = comp.get("choiceId")
     choice_name = choice_names.get(choice_id, "")
-    print(f'CHOICE CHECK. DEPENDING ON CHOICE "{choice_name}", TAKE ONE BRANCH:')
+    if choice_name:
+        choice_name = f' "{choice_name}"'
+    print(f'CHOICE CHECK. DEPENDING ON CHOICE{choice_name}, TAKE ONE BRANCH:')
     print()
     for ibranch, branch in enumerate(comp["conditions"], start=1):
         print(f"BRANCH {ibranch}")
         print()
         for branch_comp in branch["components"]:
             _print_component(branch_comp, variables, scene_titles, choice_names, config)
-    print(f'END CHOICE CHECK "{choice_name}"')
+    print(f'END CHOICE CHECK{choice_name}')
     print()
 
 
@@ -92,7 +94,7 @@ def _print_choice_component(comp, variables, scene_titles, choice_names, config)
             print()
         for opt_comp in option.get("components", []):
             _print_component(opt_comp, variables, scene_titles, choice_names, config)
-    print("END CHOICE BLOCK")
+    print(f"END CHOICE BLOCK{choice_name}")
     print()
 
 
