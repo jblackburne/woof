@@ -98,6 +98,15 @@ def _print_choice_component(comp, variables, scene_titles, choice_names, config)
     print()
 
 
+def _print_note_component(comp):
+    print("---")
+    print()
+    print(f'NOTE: {comp["note"]}')
+    print()
+    print("---")
+    print()
+
+
 def _print_component(comp, variables, scene_titles, choice_names, config):
     component_type = comp.get("type")
     if component_type == "textComponent":
@@ -112,6 +121,8 @@ def _print_component(comp, variables, scene_titles, choice_names, config):
         _print_switch_component(comp, variables, scene_titles, choice_names, config)
     elif component_type == "ifComponent":
         _print_if_component(comp, variables, scene_titles, choice_names, config)
+    elif component_type == "noteComponent":
+        _print_note_component(comp)
 
 
 def format_story(storydata):
